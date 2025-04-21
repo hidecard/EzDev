@@ -78,7 +78,10 @@ function loadSourceCodes() {
         populateCategoryFilter('source_codes');
         displaySourceCodes();
       })
-      .catch(error => console.error('Error fetching source codes:', error));
+      .catch(error => {
+        console.error('Error fetching source codes:', error);
+        document.getElementById('code-list').innerHTML = '<p class="text-center text-danger">Failed to load source codes.</p>';
+      });
   } else {
     populateCategoryFilter('source_codes');
     displaySourceCodes();
@@ -111,8 +114,8 @@ function displaySourceCodes() {
     const isFav = isFavorited(code.id, 'source_codes') ? 'active' : '';
     
     codeList.innerHTML += `
-      <div class="col-md-4 mb-4">
-        <div class="card">
+      <div class="col-12 col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
           <img src="${code.thumbnail}" class="card-img-top" alt="${code.title}">
           <div class="card-body">
             <h5 class="card-title">${code.title}</h5>
@@ -120,11 +123,13 @@ function displaySourceCodes() {
             <p><strong>Category:</strong> ${code.category}</p>
             <p><strong>Author:</strong> ${code.author}</p>
             <p><strong>Date:</strong> ${code.date}</p>
-            <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
-            <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
-            <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${code.id}, 'source_codes'); displaySourceCodes()">
-              <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
-            </button>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
+              <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
+              <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${code.id}, 'source_codes'); displaySourceCodes()">
+                <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -141,7 +146,10 @@ function loadBlogPosts() {
         populateCategoryFilter('blog');
         displayBlogPosts();
       })
-      .catch(error => console.error('Error fetching blog posts:', error));
+      .catch(error => {
+        console.error('Error fetching blog posts:', error);
+        document.getElementById('blog-list').innerHTML = '<p class="text-center text-danger">Failed to load blog posts.</p>';
+      });
   } else {
     populateCategoryFilter('blog');
     displayBlogPosts();
@@ -173,8 +181,8 @@ function displayBlogPosts() {
     const isFav = isFavorited(post.id, 'blog_posts') ? 'active' : '';
     
     blogList.innerHTML += `
-      <div class="col-md-4 mb-4">
-        <div class="card">
+      <div class="col-12 col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
           <img src="${post.thumbnail}" class="card-img-top" alt="${post.title}">
           <div class="card-body">
             <h5 class="card-title">${post.title}</h5>
@@ -182,10 +190,12 @@ function displayBlogPosts() {
             <p><strong>Category:</strong> ${post.category}</p>
             <p><strong>Author:</strong> ${post.author}</p>
             <p><strong>Date:</strong> ${post.date}</p>
-            <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
-            <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); displayBlogPosts()">
-              <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
-            </button>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
+              <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); displayBlogPosts()">
+                <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -207,16 +217,18 @@ function showBlogDetail(postId) {
   
   blogDetailContent.innerHTML = `
     <div class="blog-detail">
-      <h2>${post.title}</h2>
-      <img src="${post.thumbnail}" alt="${post.title}">
+      <h2 class="mb-3">${post.title}</h2>
+      <img src="${post.thumbnail}" class="img-fluid mb-3" alt="${post.title}">
       <p><strong>Category:</strong> ${post.category}</p>
       <p><strong>Author:</strong> ${post.author}</p>
       <p><strong>Date:</strong> ${post.date}</p>
-      <p>${post.content}</p>
-      <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); showBlogDetail(${post.id})">
-        <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
-      </button>
-      <a href="#" class="btn btn-back" onclick="showSection('blog')">Back to Blog</a>
+      <p class="mb-4">${post.content}</p>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); showBlogDetail(${post.id})">
+          <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
+        </button>
+        <a href="#" class="btn btn-secondary" onclick="showSection('blog')">Back to Blog</a>
+      </div>
     </div>
   `;
   
@@ -233,8 +245,8 @@ function loadFavorites() {
     favCodes.forEach(code => {
       const downloadZipUrl = `${code.github_repo}/archive/refs/heads/main.zip`;
       favoritesList.innerHTML += `
-        <div class="col-md-4 mb-4">
-          <div class="card">
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
             <img src="${code.thumbnail}" class="card-img-top" alt="${code.title}">
             <div class="card-body">
               <h5 class="card-title">${code.title}</h5>
@@ -242,11 +254,13 @@ function loadFavorites() {
               <p><strong>Category:</strong> ${code.category}</p>
               <p><strong>Author:</strong> ${code.author}</p>
               <p><strong>Date:</strong> ${code.date}</p>
-              <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
-              <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
-              <button class="btn btn-favorite active" onclick="toggleFavorite(${code.id}, 'source_codes'); loadFavorites()">
-                <i class="fas fa-heart"></i> Unfavorite
-              </button>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
+                <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
+                <button class="btn btn-favorite active" onclick="toggleFavorite(${code.id}, 'source_codes'); loadFavorites()">
+                  <i class="fas fa-heart"></i> Unfavorite
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -258,8 +272,8 @@ function loadFavorites() {
     const favPosts = blogPosts.filter(post => favorites.blog_posts.includes(post.id));
     favPosts.forEach(post => {
       favoritesList.innerHTML += `
-        <div class="col-md-4 mb-4">
-          <div class="card">
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
             <img src="${post.thumbnail}" class="card-img-top" alt="${post.title}">
             <div class="card-body">
               <h5 class="card-title">${post.title}</h5>
@@ -267,10 +281,12 @@ function loadFavorites() {
               <p><strong>Category:</strong> ${post.category}</p>
               <p><strong>Author:</strong> ${post.author}</p>
               <p><strong>Date:</strong> ${post.date}</p>
-              <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
-              <button class="btn btn-favorite active" onclick="toggleFavorite(${post.id}, 'blog_posts'); loadFavorites()">
-                <i class="fas fa-heart"></i> Unfavorite
-              </button>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
+                <button class="btn btn-favorite active" onclick="toggleFavorite(${post.id}, 'blog_posts'); loadFavorites()">
+                  <i class="fas fa-heart"></i> Unfavorite
+                </button>
+              </div>
             </div>
           </div>
         </div>
