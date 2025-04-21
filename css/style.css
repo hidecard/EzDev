@@ -1,39 +1,76 @@
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.nav-link {
+  font-size: 1rem;
+}
 .card-img-top {
   height: 200px;
   object-fit: cover;
 }
 .card {
-  transition: transform 0.3s;
+  transition: transform 0.2s;
 }
 .card:hover {
-  transform: scale(1.05);
-}
-.nav-link {
-  cursor: pointer;
-}
-.btn-download {
-  background-color: #28a745; /* Green color for download */
-  color: white;
-}
-.btn-download:hover {
-  background-color: #218838;
+  transform: translateY(-5px);
 }
 .btn-favorite {
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
+  background-color: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
 }
 .btn-favorite.active {
-  background-color: #dc3545; /* Red for active state */
+  background-color: #dc3545;
+  color: white;
+}
+.btn-download {
+  background-color: #333;
   color: white;
 }
 .blog-detail img {
   max-width: 100%;
   height: auto;
-  margin-bottom: 1rem;
 }
-.blog-detail {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+.form-label {
+  font-weight: 500;
+}
+.clear-search {
+  cursor: pointer;
+  display: none;
+  margin-left: 0.5rem;
+}
+@media (max-width: 576px) {
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+  .nav-link {
+    font-size: 0.875rem;
+  }
+  .card-img-top {
+    height: 150px;
+  }
+  .card-title {
+    font-size: 1.1rem;
+  }
+  .card-text, p {
+    font-size: 0.9rem;
+  }
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .form-select, .form-control {
+    font-size: 0.9rem;
+  }
+}
+@media (min-width: 768px) {
+  .filter-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .filter-container .form-group {
+    flex: 1;
+  }
 }
