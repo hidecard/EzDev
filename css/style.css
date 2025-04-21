@@ -1,0 +1,39 @@
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+}
+.card {
+  transition: transform 0.3s;
+}
+.card:hover {
+  transform: scale(1.05);
+}
+.nav-link {
+  cursor: pointer;
+}
+.btn-download {
+  background-color: #28a745; /* Green color for download */
+  color: white;
+}
+.btn-download:hover {
+  background-color: #218838;
+}
+.btn-favorite {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+}
+.btn-favorite.active {
+  background-color: #dc3545; /* Red for active state */
+  color: white;
+}
+.blog-detail img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 1rem;
+}
+.blog-detail {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
