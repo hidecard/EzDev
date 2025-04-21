@@ -5,82 +5,162 @@ let sourceCodes = [];
 let blogPosts = [];
 let currentCategory = 'All';
 let currentSearch = '';
+let searchTimeout = null;
 
 function getLocalStore(key, defaultValue = {}) {
-  return JSON.parse(localStorage.getItem(key)) || defaultValue;
+  try {
+    return JSON.parse(localStorage.getItem(key)) || defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
 }
 
 function setLocalStore(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+  }
 }
 
 function toggleFavorite(itemId, type) {
+  if (!Number.isInteger(itemId)) {
+    return false;
+  }
   const favorites = getLocalStore('favorites');
   if (!favorites[type]) favorites[type] = [];
   const index = favorites[type].indexOf(itemId);
-  if (index === -1) {
+  const isAdding = index === -1;
+  if (isAdding) {
     favorites[type].push(itemId);
   } else {
     favorites[type].splice(index, 1);
   }
   setLocalStore('favorites', favorites);
-  return index === -1;
+  return isAdding;
 }
 
 function isFavorited(itemId, type) {
+  if (!Number.isInteger(itemId)) {
+    return false;
+  }
   const favorites = getLocalStore('favorites');
   return favorites[type]?.includes(itemId) || false;
 }
 
 function showSection(section) {
-  document.querySelectorAll('#main-content > div').forEach(div => div.style.display = 'none');
-  document.getElementById(`${section}-section`).style.display = 'block';
+  const sections = document.querySelectorAll('#main-content > div');
+  if (!sections.length) {
+    return;
+  }
+  
+  sections.forEach(div => div.style.display = 'none');
+  const sectionElement = document.getElementById(`${section}-section`);
+  if (!sectionElement) {
+    return;
+  }
+  sectionElement.style.display = 'block';
   
   document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-  document.querySelector(`[data-section="${section}"]`).classList.add('active');
+  const activeLink = document.querySelector(`[data-section="${section}"]`);
+  if (activeLink) activeLink.classList.add('active');
 
   currentCategory = 'All';
   currentSearch = '';
+
+  const categoryFilter = sectionElement.querySelector('.category-filter');
+  const searchBar = sectionElement.querySelector('.search-bar');
+  const clearSearch = sectionElement.querySelector('.clear-search');
+
+  if (searchBar) {
+    searchBar.value = '';
+  }
+  if (clearSearch) {
+    clearSearch.style.display = 'none';
+  }
+
   if (section === 'source_codes') {
     loadSourceCodes();
-    populateCategoryFilter('source_codes');
-  }
-  if (section === 'blog') {
+  } else if (section === 'blog') {
     loadBlogPosts();
-    populateCategoryFilter('blog');
+  } else if (section === 'favorites') {
+    loadFavorites();
+  } else if (section === 'blog-detail') {
+    document.title = `Ez Dev - Blog Detail`;
+  } else {
+    document.title = `Ez Dev - ${section.charAt(0).toUpperCase() + section.slice(1)}`;
   }
-  if (section === 'favorites') loadFavorites();
-  if (section === 'blog-detail') document.title = `CodeShare - Blog Detail`;
-  else document.title = `CodeShare - ${section.charAt(0).toUpperCase() + section.slice(1)}`;
+
+  if (categoryFilter) {
+    categoryFilter.onchange = e => {
+      filterCategory(e.target.value, section);
+    };
+  }
+  if (searchBar) {
+    searchBar.oninput = e => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchItems(e.target.value, section);
+        if (clearSearch) clearSearch.style.display = e.target.value ? 'block' : 'none';
+      }, 300);
+    };
+  }
+  if (clearSearch) {
+    clearSearch.onclick = () => {
+      if (searchBar) {
+        searchBar.value = '';
+        clearSearch.style.display = 'none';
+        searchItems('', section);
+      }
+    };
+  }
 }
 
 function populateCategoryFilter(section) {
-  const categoryFilter = document.getElementById('category-filter');
-  categoryFilter.innerHTML = '<option value="All">All</option>';
+  const sectionElement = document.getElementById(`${section}-section`);
+  if (!sectionElement) {
+    return;
+  }
+  const categoryFilter = sectionElement.querySelector('.category-filter');
+  if (!categoryFilter) {
+    return;
+  }
   
   const items = section === 'source_codes' ? sourceCodes : blogPosts;
-  const categories = [...new Set(items.map(item => item.category))].sort();
+  const categories = [...new Set(
+    items
+      .map(item => item.category)
+      .filter(cat => cat && typeof cat === 'string')
+  )].sort();
   
-  categories.forEach(category => {
-    categoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
-  });
+  categoryFilter.innerHTML = '<option value="All">All</option>';
+  if (categories.length === 0) {
+    categoryFilter.innerHTML += '<option value="" disabled>No categories available</option>';
+  } else {
+    categories.forEach(category => {
+      categoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+  }
   
   categoryFilter.value = 'All';
-  document.getElementById('search-bar').value = '';
 }
 
 function loadSourceCodes() {
+  const codeList = document.getElementById('code-list');
+  if (!codeList) {
+    return;
+  }
+  
   if (!sourceCodes.length) {
+    codeList.innerHTML = '<p class="text-center">Loading...</p>';
     fetch(SOURCE_CODES_API)
       .then(response => response.json())
       .then(data => {
-        sourceCodes = data;
+        sourceCodes = Array.isArray(data) ? data.filter(item => Number.isInteger(item.id)) : [];
         populateCategoryFilter('source_codes');
         displaySourceCodes();
       })
       .catch(error => {
-        console.error('Error fetching source codes:', error);
-        document.getElementById('code-list').innerHTML = '<p class="text-center text-danger">Failed to load source codes.</p>';
+        codeList.innerHTML = '<p class="text-center text-danger">Failed to load source codes.</p>';
       });
   } else {
     populateCategoryFilter('source_codes');
@@ -90,8 +170,11 @@ function loadSourceCodes() {
 
 function displaySourceCodes() {
   const codeList = document.getElementById('code-list');
-  codeList.innerHTML = '';
+  if (!codeList) {
+    return;
+  }
   
+  codeList.innerHTML = '';
   let filteredCodes = sourceCodes;
   if (currentCategory !== 'All') {
     filteredCodes = filteredCodes.filter(code => code.category === currentCategory);
@@ -99,8 +182,8 @@ function displaySourceCodes() {
   if (currentSearch) {
     const searchLower = currentSearch.toLowerCase();
     filteredCodes = filteredCodes.filter(code => 
-      code.title.toLowerCase().includes(searchLower) || 
-      code.description.toLowerCase().includes(searchLower)
+      (code.title?.toLowerCase() || '').includes(searchLower) || 
+      (code.description?.toLowerCase() || '').includes(searchLower)
     );
   }
   
@@ -110,22 +193,22 @@ function displaySourceCodes() {
   }
 
   filteredCodes.forEach(code => {
-    const downloadZipUrl = `${code.github_repo}/archive/refs/heads/main.zip`;
+    const downloadZipUrl = code.github_repo ? `${code.github_repo}/archive/refs/heads/main.zip` : '#';
     const isFav = isFavorited(code.id, 'source_codes') ? 'active' : '';
     
     codeList.innerHTML += `
       <div class="col-12 col-md-6 col-lg-4 mb-4">
         <div class="card h-100">
-          <img src="${code.thumbnail}" class="card-img-top" alt="${code.title}">
+          <img src="${code.thumbnail || 'https://via.placeholder.com/150'}" class="card-img-top" alt="${code.title || 'No title'}" loading="lazy">
           <div class="card-body">
-            <h5 class="card-title">${code.title}</h5>
-            <p class="card-text">${code.description}</p>
-            <p><strong>Category:</strong> ${code.category}</p>
-            <p><strong>Author:</strong> ${code.author}</p>
-            <p><strong>Date:</strong> ${code.date}</p>
+            <h5 class="card-title">${code.title || 'Untitled'}</h5>
+            <p class="card-text">${code.description || 'No description'}</p>
+            <p><strong>Category:</strong> ${code.category || 'Uncategorized'}</p>
+            <p><strong>Author:</strong> ${code.author || 'Unknown'}</p>
+            <p><strong>Date:</strong> ${code.date || 'N/A'}</p>
             <div class="d-flex flex-wrap gap-2">
-              <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
-              <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
+              <a href="${code.demo || '#'}" class="btn btn-primary" target="_blank" ${!code.demo ? 'disabled' : ''}>Demo</a>
+              <a href="${downloadZipUrl}" class="btn btn-download" ${!code.github_repo ? 'disabled' : ''}><i class="fab fa-github"></i> Download ZIP</a>
               <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${code.id}, 'source_codes'); displaySourceCodes()">
                 <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
               </button>
@@ -138,28 +221,31 @@ function displaySourceCodes() {
 }
 
 function loadBlogPosts() {
-  if (!blogPosts.length) {
-    fetch(BLOG_POSTS_API)
-      .then(response => response.json())
-      .then(data => {
-        blogPosts = data;
-        populateCategoryFilter('blog');
-        displayBlogPosts();
-      })
-      .catch(error => {
-        console.error('Error fetching blog posts:', error);
-        document.getElementById('blog-list').innerHTML = '<p class="text-center text-danger">Failed to load blog posts.</p>';
-      });
-  } else {
-    populateCategoryFilter('blog');
-    displayBlogPosts();
+  const blogList = document.getElementById('blog-list');
+  if (!blogList) {
+    return;
   }
+  
+  blogList.innerHTML = '<p class="text-center">Loading...</p>';
+  fetch(BLOG_POSTS_API)
+    .then(response => response.json())
+    .then(data => {
+      blogPosts = Array.isArray(data) ? data.filter(item => Number.isInteger(item.id)) : [];
+      populateCategoryFilter('blog');
+      displayBlogPosts();
+    })
+    .catch(error => {
+      blogList.innerHTML = '<p class="text-center text-danger">Failed to load blog posts.</p>';
+    });
 }
 
 function displayBlogPosts() {
   const blogList = document.getElementById('blog-list');
-  blogList.innerHTML = '';
+  if (!blogList) {
+    return;
+  }
   
+  blogList.innerHTML = '';
   let filteredPosts = blogPosts;
   if (currentCategory !== 'All') {
     filteredPosts = filteredPosts.filter(post => post.category === currentCategory);
@@ -167,8 +253,8 @@ function displayBlogPosts() {
   if (currentSearch) {
     const searchLower = currentSearch.toLowerCase();
     filteredPosts = filteredPosts.filter(post => 
-      post.title.toLowerCase().includes(searchLower) || 
-      post.content.toLowerCase().includes(searchLower)
+      (post.title?.toLowerCase() || '').includes(searchLower) || 
+      (post.content?.toLowerCase() || '').includes(searchLower)
     );
   }
   
@@ -183,13 +269,13 @@ function displayBlogPosts() {
     blogList.innerHTML += `
       <div class="col-12 col-md-6 col-lg-4 mb-4">
         <div class="card h-100">
-          <img src="${post.thumbnail}" class="card-img-top" alt="${post.title}">
+          <img src="${post.thumbnail || 'https://via.placeholder.com/150'}" class="card-img-top" alt="${post.title || 'No title'}" loading="lazy">
           <div class="card-body">
-            <h5 class="card-title">${post.title}</h5>
-            <p class="card-text">${post.content.substring(0, 100)}...</p>
-            <p><strong>Category:</strong> ${post.category}</p>
-            <p><strong>Author:</strong> ${post.author}</p>
-            <p><strong>Date:</strong> ${post.date}</p>
+            <h5 class="card-title">${post.title || 'Untitled'}</h5>
+            <p class="card-text">${(post.content || 'No content').substring(0, 100)}...</p>
+            <p><strong>Category:</strong> ${post.category || 'Uncategorized'}</p>
+            <p><strong>Author:</strong> ${post.author || 'Unknown'}</p>
+            <p><strong>Date:</strong> ${post.date || 'N/A'}</p>
             <div class="d-flex flex-wrap gap-2">
               <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
               <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); displayBlogPosts()">
@@ -204,25 +290,32 @@ function displayBlogPosts() {
 }
 
 function showBlogDetail(postId) {
+  if (!Number.isInteger(postId)) {
+    return;
+  }
+  
+  const blogDetailContent = document.getElementById('blog-detail-content');
+  if (!blogDetailContent) {
+    return;
+  }
+  
   const post = blogPosts.find(p => p.id === postId);
   if (!post) {
-    const blogDetailContent = document.getElementById('blog-detail-content');
     blogDetailContent.innerHTML = '<p class="text-center">Blog post not found.</p>';
     showSection('blog-detail');
     return;
   }
   
-  const blogDetailContent = document.getElementById('blog-detail-content');
   const isFav = isFavorited(post.id, 'blog_posts') ? 'active' : '';
   
   blogDetailContent.innerHTML = `
     <div class="blog-detail">
-      <h2 class="mb-3">${post.title}</h2>
-      <img src="${post.thumbnail}" class="img-fluid mb-3" alt="${post.title}">
-      <p><strong>Category:</strong> ${post.category}</p>
-      <p><strong>Author:</strong> ${post.author}</p>
-      <p><strong>Date:</strong> ${post.date}</p>
-      <p class="mb-4">${post.content}</p>
+      <h2 class="mb-3">${post.title || 'Untitled'}</h2>
+      <img src="${post.thumbnail || 'https://via.placeholder.com/150'}" class="img-fluid mb-3" alt="${post.title || 'No title'}" loading="lazy">
+      <p><strong>Category:</strong> ${post.category || 'Uncategorized'}</p>
+      <p><strong>Author:</strong> ${post.author || 'Unknown'}</p>
+      <p><strong>Date:</strong> ${post.date || 'N/A'}</p>
+      <p class="mb-4">${post.content || 'No content'}</p>
       <div class="d-flex flex-wrap gap-2">
         <button class="btn btn-favorite ${isFav}" onclick="toggleFavorite(${post.id}, 'blog_posts'); showBlogDetail(${post.id})">
           <i class="fas fa-heart"></i> ${isFav ? 'Unfavorite' : 'Favorite'}
@@ -237,26 +330,30 @@ function showBlogDetail(postId) {
 
 function loadFavorites() {
   const favoritesList = document.getElementById('favorites-list');
+  if (!favoritesList) {
+    return;
+  }
+  
   favoritesList.innerHTML = '';
   const favorites = getLocalStore('favorites');
 
   if (favorites.source_codes?.length) {
     const favCodes = sourceCodes.filter(code => favorites.source_codes.includes(code.id));
     favCodes.forEach(code => {
-      const downloadZipUrl = `${code.github_repo}/archive/refs/heads/main.zip`;
+      const downloadZipUrl = code.github_repo ? `${code.github_repo}/archive/refs/heads/main.zip` : '#';
       favoritesList.innerHTML += `
         <div class="col-12 col-md-6 col-lg-4 mb-4">
           <div class="card h-100">
-            <img src="${code.thumbnail}" class="card-img-top" alt="${code.title}">
+            <img src="${code.thumbnail || 'https://via.placeholder.com/150'}" class="card-img-top" alt="${code.title || 'No title'}" loading="lazy">
             <div class="card-body">
-              <h5 class="card-title">${code.title}</h5>
-              <p class="card-text">${code.description}</p>
-              <p><strong>Category:</strong> ${code.category}</p>
-              <p><strong>Author:</strong> ${code.author}</p>
-              <p><strong>Date:</strong> ${code.date}</p>
+              <h5 class="card-title">${code.title || 'Untitled'}</h5>
+              <p class="card-text">${code.description || 'No description'}</p>
+              <p><strong>Category:</strong> ${code.category || 'Uncategorized'}</p>
+              <p><strong>Author:</strong> ${code.author || 'Unknown'}</p>
+              <p><strong>Date:</strong> ${code.date || 'N/A'}</p>
               <div class="d-flex flex-wrap gap-2">
-                <a href="${code.demo}" class="btn btn-primary" target="_blank">Demo</a>
-                <a href="${downloadZipUrl}" class="btn btn-download"><i class="fab fa-github"></i> Download ZIP</a>
+                <a href="${code.demo || '#'}" class="btn btn-primary" target="_blank" ${!code.demo ? 'disabled' : ''}>Demo</a>
+                <a href="${downloadZipUrl}" class="btn btn-download" ${!code.github_repo ? 'disabled' : ''}><i class="fab fa-github"></i> Download ZIP</a>
                 <button class="btn btn-favorite active" onclick="toggleFavorite(${code.id}, 'source_codes'); loadFavorites()">
                   <i class="fas fa-heart"></i> Unfavorite
                 </button>
@@ -274,13 +371,13 @@ function loadFavorites() {
       favoritesList.innerHTML += `
         <div class="col-12 col-md-6 col-lg-4 mb-4">
           <div class="card h-100">
-            <img src="${post.thumbnail}" class="card-img-top" alt="${post.title}">
+            <img src="${post.thumbnail || 'https://via.placeholder.com/150'}" class="card-img-top" alt="${post.title || 'No title'}" loading="lazy">
             <div class="card-body">
-              <h5 class="card-title">${post.title}</h5>
-              <p class="card-text">${post.content.substring(0, 100)}...</p>
-              <p><strong>Category:</strong> ${post.category}</p>
-              <p><strong>Author:</strong> ${post.author}</p>
-              <p><strong>Date:</strong> ${post.date}</p>
+              <h5 class="card-title">${post.title || 'Untitled'}</h5>
+              <p class="card-text">${(post.content || 'No content').substring(0, 100)}...</p>
+              <p><strong>Category:</strong> ${post.category || 'Uncategorized'}</p>
+              <p><strong>Author:</strong> ${post.author || 'Unknown'}</p>
+              <p><strong>Date:</strong> ${post.date || 'N/A'}</p>
               <div class="d-flex flex-wrap gap-2">
                 <a href="#" class="btn btn-primary" onclick="showBlogDetail(${post.id})">Read More</a>
                 <button class="btn btn-favorite active" onclick="toggleFavorite(${post.id}, 'blog_posts'); loadFavorites()">
@@ -311,31 +408,17 @@ function searchItems(query, section) {
   if (section === 'blog') displayBlogPosts();
 }
 
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', e => {
-    e.preventDefault();
-    const section = e.target.getAttribute('data-section');
-    showSection(section);
-  });
-});
-
+// Initialize navigation
 document.addEventListener('DOMContentLoaded', () => {
-  const categoryFilter = document.getElementById('category-filter');
-  const searchBar = document.getElementById('search-bar');
-  
-  if (categoryFilter) {
-    categoryFilter.addEventListener('change', e => {
-      const section = document.querySelector('.nav-link.active').getAttribute('data-section');
-      filterCategory(e.target.value, section);
-    });
-  }
-  
-  if (searchBar) {
-    searchBar.addEventListener('input', e => {
-      const section = document.querySelector('.nav-link.active').getAttribute('data-section');
-      searchItems(e.target.value, section);
-    });
-  }
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    link.onclick = e => {
+      e.preventDefault();
+      const section = link.getAttribute('data-section');
+      if (section) {
+        showSection(section);
+      }
+    };
+  });
+  showSection('source_codes');
 });
-
-showSection('source_codes');
