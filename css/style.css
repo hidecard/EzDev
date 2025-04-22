@@ -1,8 +1,11 @@
-/* Reset and Base Styles */
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
@@ -22,15 +25,19 @@ body {
 }
 
 .navbar-brand {
+  padding-left: 4rem;
   font-size: 1.5rem;
   font-weight: 700;
   color: #319795;
+  font-family: "Boldonse", system-ui;
 }
 
 .nav-link {
   font-size: 1rem;
+  font-weight: 700;
   color: #4a5568;
   transition: color 0.2s ease;
+  font-family: "Poppins", sans-serif;
 }
 
 .nav-link:hover,
@@ -46,11 +53,11 @@ body {
 /* Home Section */
 .home-section {
   text-align: center;
-  padding: 4rem 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #e6fffa 100%);
+  padding: 1rem 1.5rem;
+  /* background: linear-gradient(135deg, #ffffff 0%, #e6fffa 100%);
   border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); */
+  margin-bottom: 1rem;
   position: relative;
   overflow: hidden;
 }
@@ -61,16 +68,18 @@ body {
   color: #2d3748;
   margin-bottom: 1.5rem;
   letter-spacing: -0.025em;
+  font-family: "Righteous", sans-serif;
 }
 
 .home-section .lead {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 500;
   color: #4a5568;
   margin-bottom: 2rem;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  font-family: "Poppins", sans-serif;
 }
 
 /* 3D Cube */
