@@ -6,7 +6,8 @@
   <title>Ez Dev</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="./css/style.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -36,11 +37,35 @@
 
   <div id="main-content" class="container my-4">
     <div id="home-section">
-      <div class="home-section">
-        <h1>Welcome to Ez Dev</h1>
-        <img src="https://via.placeholder.com/600x300?text=Ez+Dev+Platform" alt="Ez Dev Platform" class="img-fluid mb-3">
-        <p class="lead">Ez Dev is your go-to platform for discovering and sharing source code projects and insightful blog posts. Explore a wide range of coding projects, learn from detailed tutorials, and save your favorite resources to build your skills and create amazing applications.</p>
-        <p>Navigate to the Source Codes section to find downloadable projects, check out the Blog for tips and insights, or visit Favorites to view your saved items.</p>
+      <div class="home-section animate__animated animate__fadeIn">
+        <h1 class="animate__animated animate__fadeInUp">Welcome to Ez Dev</h1>
+        <p class="lead animate__animated animate__fadeInUp animate__delay-1s">
+          Discover, learn, and build with our source code projects and insightful blog posts.
+        </p>
+        <div class="cube-container animate__animated animate__fadeIn animate__delay-2s">
+          <div class="cube">
+            <div class="cube-face front">
+              <i class="fas fa-code fa-3x"></i>
+              <p>Source Codes</p>
+            </div>
+            <div class="cube-face back">
+              <i class="fas fa-pen fa-3x"></i>
+              <p>Blog Posts</p>
+            </div>
+            <div class="cube-face left">
+              <i class="fas fa-heart fa-3x"></i>
+              <p>Favorites</p>
+            </div>
+            <div class="cube-face right">
+              <i class="fas fa-rocket fa-3x"></i>
+              <p>Build Skills</p>
+            </div>
+          </div>
+        </div>
+        <div class="cta-buttons animate__animated animate__fadeInUp animate__delay-3s">
+          <a href="#" class="btn btn-primary me-2" onclick="showSection('source_codes')">Explore Source Codes</a>
+          <a href="#" class="btn btn-secondary" onclick="showSection('blog')">Read Blog</a>
+        </div>
       </div>
     </div>
     <div id="source_codes-section" style="display: none;">
